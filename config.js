@@ -1,7 +1,10 @@
 // ===== إعدادات الموقع =====
 
 // نستخدم وسيط (CORS Proxy) لتجاوز حماية المتصفح والسماح بجلب بيانات Sofascore
-const API_BASE = 'https://corsproxy.io/?url=https://api.sofascore.com/api/v1/sport/football/scheduled-events';
+// ===== إعدادات الموقع =====
+// استخدام وسيط AllOrigins لتجاوز حماية CORS بفعالية أكبر
+const API_BASE = 'https://api.allorigins.win/get?url=';
+const SOFASCORE_URL = 'https://api.sofascore.com/api/v1/sport/football/scheduled-events/';
 
 // الدوريات المعروضة (معرفات ID الخاصة بـ Sofascore)
 const LEAGUES = [
