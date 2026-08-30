@@ -1,0 +1,66 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: #0e1a2b; color: #e2e8f0; min-height: 100vh; }
+
+/* الترويسة وزر التثبيت */
+header { background: linear-gradient(135deg, #0b3d2e, #14532d); text-align: center; padding: 25px 15px; }
+header h1 { color: #4ade80; font-size: 26px; font-weight: 900; }
+.tagline { color: #86efac; font-size: 14px; margin-top: 5px; }
+.install-btn { background: #f59e0b; color: #fff; border: none; padding: 8px 18px; border-radius: 20px; font-weight: bold; cursor: pointer; margin-top: 12px; font-size: 14px; transition: .3s; }
+.install-btn:hover { background: #d97706; }
+
+/* الفلترة وشريط التاريخ */
+#nav { display: flex; gap: 8px; padding: 12px 15px; background: #12243a; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+#nav button { background: #1e3a5f; color: #cbd5e1; border: none; padding: 10px 16px; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: bold; transition: .2s; }
+#nav button.active, #nav button:hover { background: #4ade80; color: #0e1a2b; }
+
+.date-bar { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px 15px; background: #12243a; flex-wrap: wrap; }
+.date-bar button { background: #1e3a5f; color: #cbd5e1; border: none; padding: 10px 16px; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: bold; transition: .2s; }
+.date-bar button:hover { background: #4ade80; color: #0e1a2b; }
+.date-bar input[type="date"] { background: #16283f; color: #fff; border: 1px solid #2d4a6f; padding: 9px 12px; border-radius: 10px; font-size: 14px; color-scheme: dark; }
+.today-btn { display: block; margin: 12px auto 0; background: #0b3d2e; color: #4ade80; border: 1px solid #4ade80; padding: 8px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: .2s; }
+.today-btn:hover { background: #4ade80; color: #0e1a2b; }
+.date-header { text-align: center; background: #16283f; color: #4ade80; font-weight: bold; font-size: 16px; padding: 12px; border-radius: 12px; margin-bottom: 20px; border: 1px dashed #2d4a6f; }
+
+/* الحاوية والدوريات */
+main { max-width: 800px; margin: 0 auto; padding: 20px 15px 40px; }
+.status-bar, .no-matches { text-align: center; color: #94a3b8; padding: 40px 15px; font-size: 16px; }
+.league { background: #16283f; border-radius: 14px; overflow: hidden; margin-bottom: 20px; border: 1px solid #2d4a6f; }
+.league-header { background: #1e3a5f; color: #7dd3fc; font-weight: bold; font-size: 15px; padding: 12px 15px; }
+
+/* بطاقة المباراة معدلة لدعم التفاصيل السفلية */
+.match { display: flex; flex-direction: column; border-bottom: 1px solid #1e3a5f; transition: background .3s; }
+.match:last-child { border-bottom: none; }
+.match:hover { background: #1a2f4a; }
+.match-main { display: flex; align-items: center; justify-content: space-between; padding: 14px 15px; }
+.match-details { display: flex; justify-content: space-between; background: rgba(18, 36, 58, 0.6); padding: 8px 15px; font-size: 11px; color: #94a3b8; border-top: 1px dashed #1e3a5f; }
+.detail-item { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 48%; }
+
+/* الفرق والنتيجة */
+.team { display: flex; align-items: center; gap: 10px; flex: 1; font-weight: bold; font-size: 15px; }
+.team.home { justify-content: flex-start; }
+.team.away { justify-content: flex-end; text-align: left; flex-direction: row; }
+.team-logo { width: 28px; height: 28px; object-fit: contain; }
+
+.score-box { text-align: center; min-width: 110px; }
+.score { font-size: 20px; font-weight: bold; color: #fff; }
+.score.live { color: #f87171; }
+.minute { font-size: 12px; color: #94a3b8; margin-top: 3px; }
+.minute.finished { color: #64748b; }
+.minute.scheduled { color: #4ade80; }
+.score.live::after { content: '•'; color: #ef4444; margin-right: 5px; animation: pulse 1.2s infinite; }
+
+/* وميض الهدف */
+.goal-flash { animation: goalGlow 2s ease-in-out; }
+@keyframes goalGlow { 0% { background: rgba(74,222,128,.35); } 50% { background: rgba(74,222,128,.15); } 100% { background: transparent; } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+
+/* التذييل والتجاوب */
+footer { text-align: center; padding: 20px; color: #64748b; font-size: 13px; border-top: 1px solid #1e3a5f; }
+#lastUpdate { color: #4ade80; margin-bottom: 5px; }
+@media (max-width: 480px) {
+  header h1 { font-size: 21px; }
+  .team { font-size: 13px; }
+  .team-logo { width: 22px; height: 22px; }
+  .score { font-size: 17px; }
+  .score-box { min-width: 85px; }
+}

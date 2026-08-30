@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="نتائج المباريات المباشرة - كرة القدم العربية والعالمية">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#14532d">
+  <title>⚽ OUSS LIVE | النتائج المباشرة</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- الترويسة مع زر التثبيت -->
+  <header>
+    <h1>⚽ OUSS LIVE SCORE</h1>
+    <p class="tagline">مباريات اليوم لحظة بلحظة</p>
+    <button id="installAppBtn" class="install-btn" style="display: none;">📲 تثبيت التطبيق</button>
+  </header>
+
+  <nav id="nav"></nav>
+
+  <!-- التنقل بين الأيام -->
+  <div class="date-bar">
+    <button id="prevDay">◀ اليوم السابق</button>
+    <input type="date" id="datePicker">
+    <button id="nextDay">اليوم التالي ▶</button>
+  </div>
+  <button id="todayBtn" class="today-btn">📅 اليوم</button>
+
+  <!-- الحاوية الأساسية -->
+  <main id="matchesContainer">
+    <p class="status-bar">⏳ جاري تحميل النتائج...</p>
+  </main>
+
+  <!-- التذييل -->
+  <footer>
+    <p id="lastUpdate"></p>
+    <p>المصدر: Sofascore API &copy; 2026</p>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
