@@ -40,9 +40,16 @@ function nowTimeGMT1() { return TIME_FMT.format(new Date()); }
 async function loadAll() {
   container.innerHTML = '<p class="status-bar">⏳ جاري تحميل النتائج من Sofascore...</p>';
   try {
-    const res = await fetch(`${API_BASE}/${toAPIFormat(selectedDate)}`);
-    if (!res.ok) throw new Error('فشل الاتصال بالخادم');
-    const data = await res.json();
+    // تجهيز الرابط المشفر للوسيط
+    const targetUrl = encodeURIComponent(`${SOFASCORE_URL}${toAPIFormat(selectedDate)}`);
+    const res = await fetch(`${API_BASE}${targetUrl}`);
+    
+    if (!res.ok) throw new Error('فشل الاتصال بالخادم الوسيط');
+    
+    const proxyData = await res.json();
+    
+    // الوسيط AllOrigins يضع البيانات داخل كائن اسمه contents ويجب تحويله إلى JSON
+    const data = JSON.parse(proxyData.contents); 
     const allEvents = data.events || [];
 
     // فرز المباريات حسب الدوريات الموجودة في config.js
@@ -70,6 +77,24 @@ async function loadAll() {
         }))
       };
     }).filter(l => l.events.length > 0);
+
+    // نظام فحص الأهداف للوميض
+    leagues.forEach(l => l.events.forEach(m => {
+      const key = l.code + '-' + m.id;
+      if (prevScores[key] && (prevScores[key].h !== m.home.score || prevScores[key].a !== m.away.score)) {
+        m.goal = true;
+      }
+      prevScores[key] = { h: m.home.score, a: m.away.score };
+    }));
+
+    window._leagues = leagues;
+    buildNav(); updateDateBar(); render();
+    document.getElementById('lastUpdate').textContent = 'آخر تحديث: ' + nowTimeGMT1() + ' (GMT+1)';
+  } catch (err) {
+    console.error("تفاصيل الخطأ:", err);
+    container.innerHTML = `<p class="status-bar" style="color:#ef4444;">❌ عذراً، حدث خطأ أثناء جلب النتائج. قد يكون الموقع المصدر تحت الضغط.</p>`;
+  }
+}
 
     // نظام فحص الأهداف للوميض
     leagues.forEach(l => l.events.forEach(m => {
