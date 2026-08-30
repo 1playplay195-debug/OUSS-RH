@@ -1,38 +1,24 @@
 // ===== إعدادات الموقع =====
+// استخدام مصدر بيانات مجاني ومباشر لا يحتاج إلى وسطاء CORS
+const API_BASE = 'https://raw.githubusercontent.com/openfootball/football.json/master/';
 
-// نستخدم وسيط (CORS Proxy) لتجاوز حماية المتصفح والسماح بجلب بيانات Sofascore
-// ===== إعدادات الموقع =====
-// ===== إعدادات الموقع =====
-const API_BASE = 'https://api.codetabs.com/v1/proxy?quest=';
-const SOFASCORE_URL = 'https://api.sofascore.com/api/v1/sport/football/scheduled-events/';
-// الدوريات المعروضة (معرفات ID الخاصة بـ Sofascore)
+// الدوريات المتاحة في هذا المصدر (مثال: الدوري الإنجليزي والممتاز)
 const LEAGUES = [
-  { id: 17,  code: 'eng', arName: 'الدوري الإنجليزي',   flag: '🏴' },
-  { id: 8,   code: 'esp', arName: 'الدوري الإسباني',    flag: '🇪🇸' },
-  { id: 23,  code: 'ita', arName: 'الدوري الإيطالي',    flag: '🇮🇹' },
-  { id: 35,  code: 'ger', arName: 'الدوري الألماني',    flag: '🇩🇪' },
-  { id: 34,  code: 'fra', arName: 'الدوري الفرنسي',     flag: '🇫🇷' },
-  { id: 297, code: 'sau', arName: 'دوري روشن السعودي',  flag: '🇸🇦' },
-  { id: 7,   code: 'uefa', arName: 'دوري أبطال أوروبا', flag: '🏆' }
+  { code: 'en.1', arName: 'الدوري الإنجليزي الممتاز', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', file: '2025-26/en.1.json' },
+  { code: 'es.1', arName: 'الدوري الإسباني', flag: '🇪🇸', file: '2025-26/es.1.json' },
+  { code: 'it.1', arName: 'الدوري الإيطالي', flag: '🇮🇹', file: '2025-26/it.1.json' },
+  { code: 'de.1', arName: 'الدوري الألماني', flag: '🇩🇪', file: '2025-26/de.1.json' },
+  { code: 'fr.1', arName: 'الدوري الفرنسي', flag: '🇫🇷', file: '2025-26/fr.1.json' }
 ];
 
-// مدة التحديث التلقائي بالميلي ثانية (60 ثانية)
 const REFRESH_INTERVAL = 60000;
 
-// ===== إعدادات التقويم =====
 const DAY_NAMES = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 const MONTH_NAMES = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
                      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
 
-// ترجمة حالات المباريات من Sofascore
 const STATUS_AR = {
-  'Ended':       'انتهت المباراة',
-  'Halftime':    'بين الشوطين',
-  '1st half':    'الشوط الأول',
-  '2nd half':    'الشوط الثاني',
-  'Not started': 'لم تبدأ',
-  'Canceled':    'ملغاة',
-  'Postponed':   'مؤجلة',
-  'Extra time':  'وقت إضافي',
-  'Penalties':   'ضربات جزاء'
+  'Played': 'انتهت المباراة',
+  'Scheduled': 'لم تبدأ',
+  'InProgress': 'جارية الآن'
 };
