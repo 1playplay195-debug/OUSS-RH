@@ -3,95 +3,79 @@ let selectedDate = new Date();
 const container = document.getElementById('matchesContainer');
 const prevScores = {};
 
-// ===== أدوات التاريخ (صيغة YYYY-MM-DD لـ Sofascore) =====
-function toAPIFormat(d) {
+function toInputFormat(d) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
 }
 
-function toInputFormat(d) {
-  return toAPIFormat(d);
-}
-
 function formatArabicDate(d) {
   const isToday = toInputFormat(d) === toInputFormat(new Date());
-  const isTomorrow = toInputFormat(d) === toInputFormat(new Date(Date.now() + 86400000));
-  const isYesterday = toInputFormat(d) === toInputFormat(new Date(Date.now() - 86400000));
   if (isToday) return 'اليوم';
-  if (isTomorrow) return 'غدًا';
-  if (isYesterday) return 'أمس';
   return `${DAY_NAMES[d.getDay()]} ${d.getDate()} ${MONTH_NAMES[d.getMonth()]}`;
 }
 
-// ===== التوقيت: GMT+1 =====
 const TIME_FMT = new Intl.DateTimeFormat('en-GB', {
   timeZone: 'Etc/GMT-1',
   hour: '2-digit', minute: '2-digit', hour12: false, numberingSystem: 'latn'
 });
 
-function formatTime(dateMs) {
-  try { return TIME_FMT.format(new Date(dateMs)); } catch { return ''; }
-}
 function nowTimeGMT1() { return TIME_FMT.format(new Date()); }
 
-// ===== جلب جميع النتائج من Sofascore =====
+// ===== جلب المباريات من المصدر المباشر والمستقر =====
 async function loadAll() {
-  container.innerHTML = '<p class="status-bar">⏳ جاري تحميل النتائج من Sofascore...</p>';
+  container.innerHTML = '<p class="status-bar">⏳ جاري تحميل النتائج...</p>';
   try {
-    const res = await fetch(`${API_BASE}${SOFASCORE_URL}${toAPIFormat(selectedDate)}`);
-    if (!res.ok) throw new Error('فشل الاتصال بالخادم الوسيط');
-    
-    const data = await res.json(); 
-    const allEvents = data.events || [];
+    const allLeaguesData = [];
 
-    const leagues = LEAGUES.map(league => {
-      const events = allEvents.filter(e => e.tournament.uniqueTournament?.id === league.id);
-      return {
-        ...league,
-        events: events.map(e => ({
-          id: e.id,
-          home: {
-            name: e.homeTeam.shortName || e.homeTeam.name,
-            logo: `https://api.sofascore.app/api/v1/team/${e.homeTeam.id}/image`,
-            score: e.homeScore?.display ?? ''
-          },
-          away: {
-            name: e.awayTeam.shortName || e.awayTeam.name,
-            logo: `https://api.sofascore.app/api/v1/team/${e.awayTeam.id}/image`,
-            score: e.awayScore?.display ?? ''
-          },
-          state: e.status.type,
-          detail: e.status.description || '',
-          time: formatTime(e.startTimestamp * 1000),
-          venue: 'غير متوفر',
-          tv: 'غير متوفر'
-        }))
-      };
-    }).filter(l => l.events.length > 0);
+    for (const league of LEAGUES) {
+      const res = await fetch(`${API_BASE}${league.file}`);
+      if (!res.ok) continue;
+      const data = await res.json();
+      
+      const targetDateStr = toInputFormat(selectedDate);
 
-    leagues.forEach(l => l.events.forEach(m => {
-      const key = l.code + '-' + m.id;
-      if (prevScores[key] && (prevScores[key].h !== m.home.score || prevScores[key].a !== m.away.score)) {
-        m.goal = true;
+      // تصفية المباريات حسب التاريخ المحدد
+      const matches = (data.matches || []).filter(m => m.date === targetDateStr).map(m => ({
+        id: m.round + '-' + m.team1 + '-' + m.team2,
+        home: {
+          name: m.team1,
+          logo: '',
+          score: m.score1 !== undefined ? m.score1 : ''
+        },
+        away: {
+          name: m.team2,
+          logo: '',
+          score: m.score2 !== undefined ? m.score2 : ''
+        },
+        state: m.score1 !== undefined ? 'Played' : 'Scheduled',
+        detail: m.score1 !== undefined ? 'Played' : 'Scheduled',
+        time: m.time || '--:--',
+        venue: 'غير متوفر',
+        tv: 'غير متوفر'
+      }));
+
+      if (matches.length > 0) {
+        allLeaguesData.push({
+          ...league,
+          events: matches
+        });
       }
-      prevScores[key] = { h: m.home.score, a: m.away.score };
-    }));
+    }
 
-    window._leagues = leagues;
+    window._leagues = allLeaguesData;
     buildNav(); 
     updateDateBar(); 
     render();
     document.getElementById('lastUpdate').textContent = 'آخر تحديث: ' + nowTimeGMT1() + ' (GMT+1)';
     
   } catch (err) {
-    console.error("تفاصيل الخطأ:", err);
-    container.innerHTML = `<p class="status-bar" style="color:#ef4444;">❌ عذراً، لا يمكن جلب النتائج حالياً. يرجى المحاولة بعد قليل.</p>`;
+    console.error("خطأ في الجلب:", err);
+    container.innerHTML = `<p class="status-bar" style="color:#ef4444;">❌ عذراً، لا توجد مباريات مسجلة في هذا التاريخ بالمصدر.</p>`;
   }
 }
 
-// ===== شريط التاريخ والفلترة =====
 function updateDateBar() {
   document.getElementById('datePicker').value = toInputFormat(selectedDate);
   const prev = new Date(selectedDate.getTime() - 86400000);
@@ -138,14 +122,13 @@ function setFilter(code, btn) {
   render();
 }
 
-// ===== العرض بالـ HTML =====
 function render() {
   const all = window._leagues || [];
   const filtered = currentFilter === 'all' ? all : all.filter(l => l.code === currentFilter);
   const dateHeader = `<div class="date-header">🗓️ مباريات ${formatArabicDate(selectedDate)} — التوقيت GMT+1</div>`;
 
   if (!filtered.length) {
-    container.innerHTML = dateHeader + '<p class="no-matches">لا توجد مباريات في هذا اليوم</p>';
+    container.innerHTML = dateHeader + '<p class="no-matches">لا توجد مباريات مسجلة في هذا اليوم</p>';
     return;
   }
 
@@ -153,22 +136,18 @@ function render() {
     <div class="league">
       <div class="league-header"><span>${l.flag}</span> ${l.arName}</div>
       ${l.events.map(m => `
-        <div class="match ${m.goal ? 'goal-flash' : ''}" id="match-${m.id}">
+        <div class="match" id="match-${m.id}">
           <div class="match-main">
             <div class="team home">
-              <img class="team-logo" src="${m.home.logo}" alt="" onerror="this.style.display='none'">
               ${m.home.name}
             </div>
             <div class="score-box">
-              <div class="score ${m.state === 'inprogress' ? 'live' : ''}">${m.home.score} - ${m.away.score}</div>
-              <div class="minute ${m.state === 'finished' ? 'finished' : m.state === 'notstarted' ? 'scheduled' : ''}">
-                ${m.state === 'notstarted' ? '🕒 ' + m.time :
-                  m.state === 'inprogress' ? '⏱ ' + (STATUS_AR[m.detail] || m.detail) :
-                  '✓ ' + (STATUS_AR[m.detail] || m.detail)}
+              <div class="score">${m.home.score !== '' ? m.home.score + ' - ' + m.away.score : 'VS'}</div>
+              <div class="minute ${m.state === 'Played' ? 'finished' : 'scheduled'}">
+                ${m.state === 'Scheduled' ? '🕒 ' + m.time : '✓ انتهت'}
               </div>
             </div>
-            <div class="team away">
-              <img class="team-logo" src="${m.away.logo}" alt="" onerror="this.style.display='none'">
+            <div class="team away" style="justify-content: flex-end; text-align: left;">
               ${m.away.name}
             </div>
           </div>
@@ -180,40 +159,4 @@ function render() {
     </div>`).join('');
 }
 
-// تشغيل التطبيق أول مرة
 loadAll();
-
-// التحديث التلقائي
-setInterval(() => {
-  if (toInputFormat(selectedDate) === toInputFormat(new Date())) loadAll();
-}, REFRESH_INTERVAL);
-
-// ===== إعدادات PWA (مصححة بالكامل داخل async function) =====
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
-}
-
-let deferredPrompt;
-const installBtn = document.getElementById('installAppBtn');
-
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault(); 
-  deferredPrompt = e; 
-  installBtn.style.display = 'inline-block';
-});
-
-installBtn.addEventListener('click', async () => {
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    const choiceResult = await deferredPrompt.userChoice;
-    if (choiceResult.outcome === 'accepted') {
-      console.log('تم قبول تثبيت التطبيق');
-    }
-    deferredPrompt = null; 
-    installBtn.style.display = 'none';
-  }
-});
-
-window.addEventListener('appinstalled', () => {
-  installBtn.style.display = 'none';
-});
