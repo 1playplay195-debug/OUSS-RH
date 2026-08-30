@@ -40,6 +40,61 @@ function nowTimeGMT1() { return TIME_FMT.format(new Date()); }
 async function loadAll() {
   container.innerHTML = '<p class="status-bar">⏳ جاري تحميل النتائج من Sofascore...</p>';
   try {
+    // جلب البيانات عبر وسيط CodeTabs السريع
+    const res = await fetch(`${API_BASE}${SOFASCORE_URL}${toAPIFormat(selectedDate)}`);
+    
+    if (!res.ok) throw new Error('فشل الاتصال بالخادم الوسيط');
+    
+    // CodeTabs يعيد البيانات كـ JSON مباشرة
+    const data = await res.json(); 
+    const allEvents = data.events || [];
+
+    // فرز المباريات
+    const leagues = LEAGUES.map(league => {
+      const events = allEvents.filter(e => e.tournament.uniqueTournament?.id === league.id);
+      return {
+        ...league,
+        events: events.map(e => ({
+          id: e.id,
+          home: {
+            name: e.homeTeam.shortName || e.homeTeam.name,
+            logo: `https://api.sofascore.app/api/v1/team/${e.homeTeam.id}/image`,
+            score: e.homeScore?.display ?? ''
+          },
+          away: {
+            name: e.awayTeam.shortName || e.awayTeam.name,
+            logo: `https://api.sofascore.app/api/v1/team/${e.awayTeam.id}/image`,
+            score: e.awayScore?.display ?? ''
+          },
+          state: e.status.type,
+          detail: e.status.description || '',
+          time: formatTime(e.startTimestamp * 1000),
+          venue: 'غير متوفر',
+          tv: 'غير متوفر'
+        }))
+      };
+    }).filter(l => l.events.length > 0);
+
+    // تحديث الأهداف
+    leagues.forEach(l => l.events.forEach(m => {
+      const key = l.code + '-' + m.id;
+      if (prevScores[key] && (prevScores[key].h !== m.home.score || prevScores[key].a !== m.away.score)) {
+        m.goal = true;
+      }
+      prevScores[key] = { h: m.home.score, a: m.away.score };
+    }));
+
+    window._leagues = leagues;
+    buildNav(); 
+    updateDateBar(); 
+    render();
+    document.getElementById('lastUpdate').textContent = 'آخر تحديث: ' + nowTimeGMT1() + ' (GMT+1)';
+    
+  } catch (err) {
+    console.error("تفاصيل الخطأ:", err);
+    container.innerHTML = `<p class="status-bar" style="color:#ef4444;">❌ عذراً، لا يمكن جلب النتائج حالياً. يرجى المحاولة بعد قليل.</p>`;
+  }
+}
     // تجهيز الرابط المشفر للوسيط
     const targetUrl = encodeURIComponent(`${SOFASCORE_URL}${toAPIFormat(selectedDate)}`);
     const res = await fetch(`${API_BASE}${targetUrl}`);
